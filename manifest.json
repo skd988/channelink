@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Channelink",
+  "version": "1.0",
+
+  "description": "Adds a channel link to youtube video suggestions.",
+
+  "icons": {
+    "48": "icons/link.svg",
+    "96": "icons/link.svg"
+  },
+    
+  "content_scripts": [
+    {
+      "matches": ["https://*.youtube.com/watch?*"],
+      "js": ["channelink.js", "api.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
+ 
