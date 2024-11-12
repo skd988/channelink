@@ -1,7 +1,16 @@
-const isFirefox = typeof InstallTrigger !== 'undefined'
-const watch_later_selector = isFirefox? 
-            '#items > ytd-item-section-renderer > #contents' :
-            'ytd-watch-next-secondary-results-renderer > #items';
+//const isFirefox = typeof InstallTrigger !== 'undefined';
+// const watch_later_selector = isFirefox? 
+            // '#items > ytd-item-section-renderer > #contents' :
+            // 'ytd-watch-next-secondary-results-renderer > #items';
+
+const watch_later_selector = 'ytd-watch-next-secondary-results-renderer > #items';
+
+const createElementFromHtml = htmlString => 
+{
+	const elem = document.createElement('template');
+	elem.innerHTML = htmlString.trim();
+	return elem.content;
+};
 
 const waitForElement = (target, selector) =>
 {
@@ -28,6 +37,31 @@ const waitForElement = (target, selector) =>
     });
 };
 
+const waitForElementToDisappear = (target, selector) =>
+{
+    return new Promise((resolve, reject) => 
+    {
+        const selection = target.querySelector(selector);
+        if (!selection)
+            return resolve();
+        
+        const observer = new MutationObserver(() => 
+        {
+            const selection = target.querySelector(selector);
+            if(!selection)
+            {
+                observer.disconnect();
+                return resolve();
+            }
+        });
+        
+        observer.observe(target, {
+            childList: true,
+            subtree: true
+        });
+    });
+};
+
 const addChannelLink = video =>
 {
     waitForElement(video, 'yt-formatted-string')
@@ -37,8 +71,18 @@ const addChannelLink = video =>
         getChannelHandler(href.slice(href.indexOf('=') + 1))
         .then(handler =>
         {
-            channel.innerHTML = '<a class="yt-simple-endpoint style-scope yt-formatted-string" \
-                    href="' + handler + '">' + channel.innerText + '</a>';                    
+			const parent = channel.parentElement;
+			const newChannel = channel.cloneNode(true);
+			newChannel.innerText = channel.innerText;
+			//const linkElement = createElementFromHtml('<a class="yt-simple-endpoint style-scope yt-formatted-string" \
+            //        href="' + handler + '"/>');
+			const linkElement = document.createElement('a');
+			linkElement.setAttribute('href', handler);
+			const linkElementNode = parent.appendChild(linkElement);
+
+			const newChannelNode = linkElementNode.appendChild(newChannel);
+			newChannelNode.innerText = channel.innerText;
+			parent.removeChild(channel);
         });
     });
 };
@@ -70,20 +114,22 @@ const getChannelHandler = videoId =>
 };
 
 const changeToLinks = async () =>
-{    
-    const observer = new MutationObserver(records => 
-    {
-        records.forEach(record => record.addedNodes.forEach(addChannelLink));
-    });
-
+{
     waitForElement(document, watch_later_selector)
     .then(watch_later => 
     {
+		const observer = new MutationObserver(records => 
+		{
+			records.forEach(record => record.addedNodes.forEach(addChannelLink));
+		});
         observer.observe(watch_later, {
             childList: true
         });
+		
+		
         Array.from(watch_later.childNodes).forEach(addChannelLink)
     });
 };
 
+console.log('hello');
 changeToLinks();
