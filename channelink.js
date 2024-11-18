@@ -66,7 +66,7 @@ const addChannelLink = video =>
         return;
     
     const href = video.querySelector('#thumbnail').getAttribute('href');
-    const videoId = href.slice(href.indexOf('=') + 1);
+    const videoId = href.slice((href.includes('shorts')? href.lastIndexOf('/') : href.indexOf('=')) + 1);
     Promise.all([waitForElement(video, 'yt-formatted-string'), getChannelUrl(videoId)])
     .then(([channelNameElement, url]) =>
     {
