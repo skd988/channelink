@@ -78,16 +78,24 @@ const addChannelLink = video =>
     });
 };
 
-waitForElement(document, video_suggested_tag)
-.then(video => 
+const addLinksToWatchList = () =>
 {
-    const watch_later = video.parentElement;
-    const observer = new MutationObserver(records => 
+    if(typeof API_KEY === undefined)
+        return console.error('Error: extension requires an api key in api.js');
+    
+    waitForElement(document, video_suggested_tag)
+    .then(video => 
     {
-        records.forEach(record => record.addedNodes.forEach(addChannelLink));
+        const watch_later = video.parentElement;
+        const observer = new MutationObserver(records => 
+        {
+            records.forEach(record => record.addedNodes.forEach(addChannelLink));
+        });
+        observer.observe(watch_later, {
+            childList: true
+        });
+        watch_later.childNodes.forEach(addChannelLink);
     });
-    observer.observe(watch_later, {
-        childList: true
-    });
-    watch_later.childNodes.forEach(addChannelLink);
-});
+}
+
+addLinksToWatchList();
