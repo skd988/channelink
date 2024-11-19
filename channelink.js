@@ -1,6 +1,6 @@
 const video_suggested_tag = 'ytd-compact-video-renderer';
 
-const video_to_channel_name_cache = {};
+const video_id_to_channel_name_cache = {};
 const channel_name_to_url_cache = {};
 
 const waitForElement = (target, selector) =>
@@ -33,32 +33,30 @@ const status = response =>
     return response.ok? Promise.resolve(response.json()) : Promise.reject('Error:' + response.status);
 };
 
-const getChannelUrl = videoId =>
+const getChannelUrl = async videoId =>
 {
-    return (video_to_channel_name_cache[videoId]? 
-        new Promise(() => video_to_channel_name_cache[videoId])
+    return (video_id_to_channel_name_cache[videoId]? 
+        new Promise(() => video_id_to_channel_name_cache[videoId])
         :
         fetch('https://www.googleapis.com/youtube/v3/videos?part=snippet&id='
                                 + videoId + '&key=' + API_KEY)
-            .then(status)
-            .then(data => data?.items?.length?
-                    video_to_channel_name_cache[videoId] = data.items[0].snippet.channelId
-                    : Promise.reject('Data is invalid. id:' + videoId + 'key:' + API_KEY)
-            )
+        .then(status)
+        .then(data => 
+            video_id_to_channel_name_cache[videoId] = data?.items?.[0]?.snippet?.channelId
+            ?? Promise.reject('Data is invalid. id:' + videoId + 'key:' + API_KEY)
+        )
     )
-    .then(channelId =>
-        channel_name_to_url_cache[channelId]?
-            new Promise(() => channel_name_to_url_cache[channelId])
-            :
-            fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet&id='
-                                + channelId + '&key=' + API_KEY)
-            .then(status)
-            .then(data => data?.items?.length?
-                (channel_name_to_url_cache[channelId] = data.items[0].snippet.customUrl?
-                    data.items[0].snippet.customUrl 
-                    : 'channel/' + data.items[0].id)
-                : Promise.reject('Data is invalid')
-            )
+    .then(channelId => 
+        channel_name_to_url_cache[channelId]
+        ??
+        fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet&id='
+                            + channelId + '&key=' + API_KEY)
+        .then(status)
+        .then(data => data?.items?.length?
+            (channel_name_to_url_cache[channelId] = data.items[0].snippet.customUrl
+            ?? 'channel/' + data.items[0].id)
+            : Promise.reject('Data is invalid')
+        )
     )
     .catch(error => console.error(error));
 };
