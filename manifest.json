@@ -6,16 +6,25 @@
   "description": "Adds a channel link to youtube video suggestions.",
 
   "icons": {
-    "48": "icons/link.svg",
-    "96": "icons/link.svg"
+      "48": "icons/link.png"
   },
-    
+
+  "permissions": [
+      "storage"
+  ],
+
   "content_scripts": [
     {
       "matches": ["https://*.youtube.com/*"],
-      "js": ["channelink.js", "api.js"],
+      "js": ["channelink.js"],
       "run_at": "document_start"
     }
-  ]
+  ],
+  
+  "action": {
+      "default_icon": "icons/link.png",
+      "default_title": "Channelink",
+      "default_popup": "popup/popup.html"
+  }
+  
 }
- 

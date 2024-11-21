@@ -1,4 +1,5 @@
-const video_suggested_tag = 'ytd-compact-video-renderer';
+const VIDEO_SUGGESTED_TAG = 'ytd-compact-video-renderer';
+const YOUTUBE_API_URL = 'https://www.googleapis.com/youtube/v3/';
 
 const waitForElement = (target, selector) =>
 {
@@ -32,7 +33,7 @@ const status = response =>
 
 const getChannelUrl = videoId =>
 {
-    return fetch('https://www.googleapis.com/youtube/v3/videos?part=snippet&id='
+    return fetch(YOUTUBE_API_URL + 'videos?part=snippet&id='
                                 + videoId + '&key=' + API_KEY)
         .then(status)
         .then(data => {
@@ -40,7 +41,7 @@ const getChannelUrl = videoId =>
                 data.items[0].snippet.channelId
                 : Promise.reject('Data is invalid. id:' + videoId + 'key:' + API_KEY);
         })
-        .then(channelId => fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet&id='
+        .then(channelId => fetch(YOUTUBE_API_URL + 'channels?part=snippet&id='
                                 + channelId + '&key=' + API_KEY))
         .then(status)
         .then(data => {
@@ -62,7 +63,7 @@ const changeChannelNameToLink = (channelNameElement, url) =>
 
 const addChannelLink = video =>
 {
-    if (video.tagName.toLowerCase() !== video_suggested_tag)
+    if (video.tagName.toLowerCase() !== VIDEO_SUGGESTED_TAG)
         return;
     
     const href = video.querySelector('#thumbnail').getAttribute('href');
@@ -75,27 +76,44 @@ const addChannelLink = video =>
         videoObserver.observe(channelNameElement, {
            attributeFilter: ['title']
         });
-    });
+    })
+    .catch(error => console.log(error));
 };
+let API_KEY;
+
+if (typeof browser === "undefined")
+{
+    var browser = chrome;
+}
 
 const addLinksToWatchList = () =>
 {
-    if(typeof API_KEY === undefined)
-        return console.error('Error: extension requires an api key in api.js');
-    
-    waitForElement(document, video_suggested_tag)
-    .then(video => 
+    browser.storage.sync.get('api_key').then(key => 
     {
-        const watch_later = video.parentElement;
-        const observer = new MutationObserver(records => 
-        {
-            records.forEach(record => record.addedNodes.forEach(addChannelLink));
-        });
-        observer.observe(watch_later, {
-            childList: true
-        });
-        watch_later.childNodes.forEach(addChannelLink);
-    });
+        if(!Object.keys(key).length)
+            return Promise.reject('Error: extension requires a youtube api key to function. Load it thorugh the extension popup')
+        
+        API_KEY = key['api_key'];
+        
+        fetch(YOUTUBE_API_URL + 'search?key=' + API_KEY)
+        .then(response => response.ok? Promise.resolve() : Promise.reject('Error: api key is not valid'))
+        .then(() => 
+            waitForElement(document, VIDEO_SUGGESTED_TAG)
+            .then(video => 
+            {
+                const watch_later = video.parentElement;
+                const observer = new MutationObserver(records => 
+                    records.forEach(record => record.addedNodes.forEach(addChannelLink))
+                );
+
+                observer.observe(watch_later, {
+                    childList: true
+                });
+                watch_later.childNodes.forEach(addChannelLink);
+            }))
+        .catch(e => console.log(e));
+    })
+    .catch(e => console.log(e));
 }
 
 addLinksToWatchList();
