@@ -1,4 +1,5 @@
-const video_suggested_tag = 'ytd-compact-video-renderer';
+const VIDEO_SUGGESTED_TAG = 'ytd-compact-video-renderer';
+const SEARCH_FOR_URL = 'ownerProfileUrl":"http://www.youtube.com/';
 
 const waitForElement = (target, selector) =>
 {
@@ -30,44 +31,33 @@ const status = response =>
     return response.ok? Promise.resolve(response.json()) : Promise.reject('Error:' + response.status);
 };
 
-const getChannelUrl = videoId =>
+const getChannelUrl = videoUrl =>
 {
-    return fetch('https://www.googleapis.com/youtube/v3/videos?part=snippet&id='
-                                + videoId + '&key=' + API_KEY)
-        .then(status)
-        .then(data => {
-            return data?.items?.length?
-                data.items[0].snippet.channelId
-                : Promise.reject('Data is invalid. id:' + videoId + 'key:' + API_KEY);
-        })
-        .then(channelId => fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet&id='
-                                + channelId + '&key=' + API_KEY))
-        .then(status)
-        .then(data => {
-            if (!data?.items?.length)
-                return Promise.reject('Data is invalid');
-            
-            return data.items[0].snippet.customUrl?
-                data.items[0].snippet.customUrl 
-                : 'channel/' + data.items[0].id;
-        })
-        .catch(error => console.error(error));
+	return fetch(videoUrl)
+	.then(res => res.ok? Promise.resolve(res.text()) : Promise.reject('Error:' + res.status))
+	.then(text => 
+	{
+		const urlLoc = text.indexOf(SEARCH_FOR_URL) + SEARCH_FOR_URL.length;
+		const textFromSearch = text.substr(urlLoc);
+		return textFromSearch.substr(0, textFromSearch.indexOf('"'));
+	})
+    .catch(error => console.error(error));
 };
 
 const changeChannelNameToLink = (channelNameElement, url) =>
 {
+	channelNameElement.setAttribute('has-link-only_', '');
     channelNameElement.innerHTML = '<a class="yt-simple-endpoint style-scope yt-formatted-string" \
                     href="' + url + '">' + channelNameElement.getAttribute('title') + '</a>';                    
 };
 
 const addChannelLink = video =>
 {
-    if (video.tagName.toLowerCase() !== video_suggested_tag)
+    if (video.tagName.toLowerCase() !== VIDEO_SUGGESTED_TAG)
         return;
     
     const href = video.querySelector('#thumbnail').getAttribute('href');
-    const videoId = href.slice((href.includes('shorts')? href.lastIndexOf('/') : href.indexOf('=')) + 1);
-    Promise.all([waitForElement(video, 'yt-formatted-string'), getChannelUrl(videoId)])
+    Promise.all([waitForElement(video, 'yt-formatted-string'), getChannelUrl(href)])
     .then(([channelNameElement, url]) =>
     {
         changeChannelNameToLink(channelNameElement, url);
@@ -79,22 +69,19 @@ const addChannelLink = video =>
 };
 
 const addLinksToWatchList = () =>
-{
-    if(typeof API_KEY === undefined)
-        return console.error('Error: extension requires an api key in api.js');
-    
-    waitForElement(document, video_suggested_tag)
+{    
+    waitForElement(document, VIDEO_SUGGESTED_TAG)
     .then(video => 
     {
-        const watch_later = video.parentElement;
+        const watchLater = video.parentElement;
         const observer = new MutationObserver(records => 
         {
             records.forEach(record => record.addedNodes.forEach(addChannelLink));
         });
-        observer.observe(watch_later, {
+        observer.observe(watchLater, {
             childList: true
         });
-        watch_later.childNodes.forEach(addChannelLink);
+        watchLater.childNodes.forEach(addChannelLink);
     });
 }
 
