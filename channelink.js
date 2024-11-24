@@ -1,5 +1,6 @@
 const VIDEO_SUGGESTED_TAG = 'ytd-compact-video-renderer';
-const SEARCH_FOR_URL = 'ownerProfileUrl":"http://www.youtube.com/';
+const SEARCH_FOR_URL = '<link itemprop="url" href="http://www.youtube.com/';
+
 
 const waitForElement = (target, selector) =>
 {
@@ -26,21 +27,13 @@ const waitForElement = (target, selector) =>
     });
 };
 
-const status = response => 
-{
-    return response.ok? Promise.resolve(response.json()) : Promise.reject('Error:' + response.status);
-};
-
 const getChannelUrl = videoUrl =>
 {
 	return fetch(videoUrl)
 	.then(res => res.ok? Promise.resolve(res.text()) : Promise.reject('Error:' + res.status))
-	.then(text => 
-	{
-		const urlLoc = text.indexOf(SEARCH_FOR_URL) + SEARCH_FOR_URL.length;
-		const textFromSearch = text.substr(urlLoc);
-		return textFromSearch.substr(0, textFromSearch.indexOf('"'));
-	})
+	.then(text => text
+                    .substr(text.indexOf(SEARCH_FOR_URL) + SEARCH_FOR_URL.length)
+                    .split('"')[0])
     .catch(error => console.error(error));
 };
 
@@ -61,7 +54,8 @@ const addChannelLink = video =>
     .then(([channelNameElement, url]) =>
     {
         changeChannelNameToLink(channelNameElement, url);
-        const videoObserver = new MutationObserver(() => changeChannelNameToLink(channelNameElement, url));
+        const videoObserver = new MutationObserver(() => 
+                                    changeChannelNameToLink(channelNameElement, url));
         videoObserver.observe(channelNameElement, {
            attributeFilter: ['title']
         });
