@@ -54,24 +54,34 @@ const getChannelUrl = videoId =>
         .catch(error => console.error(error));
 };
 
-const changeChannelNameToLink = (channelNameElement, url) =>
+const getVideoId = video =>
 {
-    channelNameElement.innerHTML = '<a class="yt-simple-endpoint style-scope yt-formatted-string" \
-                    href="' + url + '">' + channelNameElement.getAttribute('title') + '</a>';                    
+    const href = video.querySelector('#thumbnail').getAttribute('href');
+    return href.slice((href.includes('shorts')? 
+                                    href.lastIndexOf('/') : 
+                                    href.indexOf('=')) + 1);
+}
+
+const changeChannelNameToLink = (channelNameElement, videoId) =>
+{
+    getChannelUrl(videoId)
+    .then(url => 
+        channelNameElement.innerHTML = '<a class="yt-simple-endpoint style-scope yt-formatted-string" \
+                        href="' + url + '">' + channelNameElement.getAttribute('title') + '</a>'                    
+    );
 };
 
-const addChannelLink = video =>
+const setupVideoObserver = video =>
 {
     if (video.tagName.toLowerCase() !== video_suggested_tag)
         return;
     
-    const href = video.querySelector('#thumbnail').getAttribute('href');
-    const videoId = href.slice((href.includes('shorts')? href.lastIndexOf('/') : href.indexOf('=')) + 1);
-    Promise.all([waitForElement(video, 'yt-formatted-string'), getChannelUrl(videoId)])
-    .then(([channelNameElement, url]) =>
+    waitForElement(video, 'yt-formatted-string')
+    .then((channelNameElement) =>
     {
-        changeChannelNameToLink(channelNameElement, url);
-        const videoObserver = new MutationObserver(() => changeChannelNameToLink(channelNameElement, url));
+        changeChannelNameToLink(channelNameElement, getVideoId(video));
+        const videoObserver = new MutationObserver(() => 
+                            changeChannelNameToLink(channelNameElement, getVideoId(video)));
         videoObserver.observe(channelNameElement, {
            attributeFilter: ['title']
         });
@@ -88,13 +98,14 @@ const addLinksToWatchList = () =>
     {
         const watch_later = video.parentElement;
         const observer = new MutationObserver(records => 
-        {
-            records.forEach(record => record.addedNodes.forEach(addChannelLink));
-        });
+            records.forEach(record => record.addedNodes.forEach(setupVideoObserver))
+        );
+
         observer.observe(watch_later, {
             childList: true
         });
-        watch_later.childNodes.forEach(addChannelLink);
+        
+        watch_later.childNodes.forEach(setupVideoObserver);
     });
 }
 
