@@ -1,6 +1,6 @@
 const VIDEO_SUGGESTED_TAG = 'ytd-compact-video-renderer';
 const SEARCH_FOR_URL = '<link itemprop="url" href="http://www.youtube.com/';
-
+const YOUTUBE_BASE_DOMAIN = 'https://www.youtube.com/';
 
 const waitForElement = (target, selector) =>
 {
@@ -29,7 +29,7 @@ const waitForElement = (target, selector) =>
 
 const getChannelUrl = videoUrl =>
 {
-	return fetch(videoUrl)
+	return fetch(YOUTUBE_BASE_DOMAIN + videoUrl)
 	.then(res => res.ok? Promise.resolve(res.text()) : Promise.reject('Error:' + res.status))
 	.then(text => text
                     .substr(text.indexOf(SEARCH_FOR_URL) + SEARCH_FOR_URL.length)
