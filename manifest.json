@@ -1,9 +1,9 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "Channelink",
   "version": "1.0",
 
-  "description": "Adds a channel link to youtube video suggestions.",
+  "description": "Adds a channel link to youtube's watch later suggestions.",
 
   "icons": {
     "48": "icons/link.png"
