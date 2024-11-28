@@ -3,7 +3,7 @@
   "name": "Channelink",
   "version": "1.0",
 
-  "description": "Adds a channel link to youtube's watch later suggestions.",
+  "description": "Adds channel links to video suggestions in youtube's watch later list.",
 
   "icons": {
     "48": "icons/link.png"
