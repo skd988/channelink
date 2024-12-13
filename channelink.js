@@ -34,7 +34,7 @@ const fetchChannelUrl = videoUrl =>
 	.then(text => text
                     .substr(text.indexOf(SEARCH_FOR_URL) + SEARCH_FOR_URL.length)
                     .split('"')[0])
-    .catch(error => console.error(error));
+    .catch(e => console.error(e));
 };
 
 const getVideoUrl = video =>
@@ -61,7 +61,8 @@ const changeChannelNameToLink = (linkTag, title, videoUrl) =>
 					urlObj[title] = url;
 					browser.storage.local.set(urlObj);				
 				}
-			});
+			})
+			.catch(e => console.error(e));
 	})
 	.catch(e => 
 		console.error(e)
