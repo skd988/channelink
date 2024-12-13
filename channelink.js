@@ -27,7 +27,7 @@ const waitForElement = (target, selector) =>
     });
 };
 
-const getChannelUrl = videoUrl =>
+const fetchChannelUrl = videoUrl =>
 {
 	return fetch(YOUTUBE_BASE_DOMAIN + videoUrl)
 	.then(res => res.ok? Promise.resolve(res.text()) : Promise.reject('Error:' + res.status))
@@ -46,10 +46,26 @@ const changeChannelNameToLink = (linkTag, title, videoUrl) =>
 {
     linkTag.innerText = title;
 	
-    getChannelUrl(videoUrl)
-    .then(url => 
-        linkTag.setAttribute('href', url)
-    );
+	browser.storage.local.get(title)
+	.then(urlObj => {
+		if (urlObj[title])
+			linkTag.setAttribute('href', urlObj[title]);
+		else
+			fetchChannelUrl(videoUrl)
+			.then(url => 
+			{
+				if (url)
+				{
+					linkTag.setAttribute('href', url);
+					const urlObj = {}
+					urlObj[title] = url;
+					browser.storage.local.set(urlObj);				
+				}
+			});
+	})
+	.catch(e => 
+		console.error(e)
+	);
 };
 
 const setupUpdatingLink = video =>
