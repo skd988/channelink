@@ -45,8 +45,7 @@ const getVideoUrl = video =>
 const changeChannelNameToLink = (linkTag, title, videoUrl) =>
 {
     linkTag.innerText = title;
-    linkTag.setAttribute('href', '')
-        
+	
     getChannelUrl(videoUrl)
     .then(url => 
         linkTag.setAttribute('href', url)
