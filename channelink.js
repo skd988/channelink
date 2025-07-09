@@ -1,4 +1,4 @@
-const VIDEO_SUGGESTED_TAG = 'ytd-compact-video-renderer';
+const VIDEO_SUGGESTED_TAG = 'yt-lockup-view-model';
 const SEARCH_FOR_URL = '<link itemprop="url" href="http://www.youtube.com/';
 const YOUTUBE_BASE_DOMAIN = 'https://www.youtube.com/';
 
@@ -39,12 +39,12 @@ const getChannelUrl = videoUrl =>
 
 const getVideoUrl = video =>
 {
-    return video.querySelector('#thumbnail').getAttribute('href');
+    return video?.querySelector('a')?.getAttribute('href');
 };
 
-const changeChannelNameToLink = (linkTag, title, videoUrl) =>
+const changeChannelNameToLink = (linkTag, name, videoUrl) =>
 {
-    linkTag.innerText = title;
+    linkTag.innerText = name;
 	
     getChannelUrl(videoUrl)
     .then(url => 
@@ -56,26 +56,23 @@ const setupUpdatingLink = video =>
 {
     if (video.tagName.toLowerCase() !== VIDEO_SUGGESTED_TAG)
         return;
-    
-    waitForElement(video, 'yt-formatted-string')
+	
+    waitForElement(video, 'yt-content-metadata-view-model span')
     .then(channelNameElement =>
     {
-        channelNameElement.setAttribute('has-link-only_', '');
-        channelNameElement.innerText = '';
-        const linkTag = document.createElement('a');
-        channelNameElement.appendChild(linkTag);
-        
-        linkTag.setAttribute('class', 'yt-simple-endpoint style-scope yt-formatted-string');
-        changeChannelNameToLink(linkTag, 
-            channelNameElement.getAttribute('title'), getVideoUrl(video));
-        
-        const videoObserver = new MutationObserver(() => 
-                            changeChannelNameToLink(linkTag, 
-                                channelNameElement.getAttribute('title'), getVideoUrl(video)));
+		const name = channelNameElement.innerText;
 
-        videoObserver.observe(channelNameElement, {
-           attributeFilter: ['title']
-        });
+        channelNameElement.setAttribute('has-link-only_', '');
+        const linkTag = document.createElement('a');
+        
+        linkTag.setAttribute('class', 'yt-simple-endpoint style-scope');
+		linkTag.setAttribute('style', '--yt-endpoint-color:var(--yt-spec-text-secondary);--yt-endpoint-hover-color:var(--yt-spec-text-primary);');
+        changeChannelNameToLink(linkTag, 
+            name, getVideoUrl(video));
+			
+		channelNameElement.removeChild(channelNameElement.firstChild);
+
+		channelNameElement.prepend(linkTag);
     });
 };
 
