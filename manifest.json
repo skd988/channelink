@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Channelink",
-  "version": "1.0",
+  "version": "1.1",
 
   "description": "Adds channel links to video suggestions in youtube's watch later list.",
 
