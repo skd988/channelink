@@ -1,4 +1,5 @@
 const VIDEO_SUGGESTED_TAG = 'yt-lockup-view-model';
+const WATCH_LATER_SELECTOR = 'div#contents:has(> yt-lockup-view-model)';
 const SEARCH_FOR_URL = '<link itemprop="url" href="http://www.youtube.com/';
 const YOUTUBE_BASE_DOMAIN = 'https://www.youtube.com/';
 
@@ -32,7 +33,7 @@ const getChannelUrl = videoUrl =>
 	return fetch(YOUTUBE_BASE_DOMAIN + videoUrl)
 	.then(res => res.ok? Promise.resolve(res.text()) : Promise.reject('Error:' + res.status))
 	.then(text => text
-                    .substr(text.indexOf(SEARCH_FOR_URL) + SEARCH_FOR_URL.length)
+                    .substring(text.indexOf(SEARCH_FOR_URL) + SEARCH_FOR_URL.length)
                     .split('"')[0])
     .catch(error => console.error(error));
 };
@@ -78,10 +79,15 @@ const setupUpdatingLink = video =>
 
 const addLinksToWatchList = () =>
 {    
-    waitForElement(document, VIDEO_SUGGESTED_TAG)
-    .then(video => 
+    waitForElement(document, WATCH_LATER_SELECTOR)
+    .then(watchLater => 
     {
-        const watchLater = video.parentElement;
+        const observeWatchLaterRemoval = new MutationObserver(records =>
+        {
+            if(records.some(record => Array.from(record.removedNodes).some(removed => removed === watchLater)))
+                addLinksToWatchList();
+        });
+        observeWatchLaterRemoval.observe(watchLater.parentElement, {childList:true});        
         const observer = new MutationObserver(records => 
             records.forEach(record => record.addedNodes.forEach(setupUpdatingLink))
         );
