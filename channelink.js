@@ -1,5 +1,5 @@
 const VIDEO_SUGGESTED_TAG = 'yt-lockup-view-model';
-const WATCH_LATER_SELECTOR = 'div#items:has(> yt-lockup-view-model)';
+const WATCH_LATER_SELECTOR = 'div:has(> yt-lockup-view-model)';
 const SEARCH_FOR_URL = '<link itemprop="url" href="http://www.youtube.com/';
 const YOUTUBE_BASE_DOMAIN = 'https://www.youtube.com/';
 
