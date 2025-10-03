@@ -1,7 +1,8 @@
-const VIDEO_SUGGESTED_TAG = 'yt-lockup-view-model';
-const WATCH_LATER_SELECTOR = 'div:has(> yt-lockup-view-model)';
+const VIDEO_SUGGESTED_TAG = 'yt-lockup-view-model, ytd-compact-video-renderer';
+const WATCH_LATER_SELECTOR = 'div:is(#contents, #items):has(> yt-lockup-view-model)';
 const SEARCH_FOR_URL = '<link itemprop="url" href="http://www.youtube.com/';
 const YOUTUBE_BASE_DOMAIN = 'https://www.youtube.com/';
+const CHANNEL_NAME_SELECTOR = '.ytd-channel-name yt-formatted-string.ytd-channel-name, yt-content-metadata-view-model span';
 
 const waitForElement = (target, selector) =>
 {
@@ -54,11 +55,8 @@ const changeChannelNameToLink = (linkTag, name, videoUrl) =>
 };
 
 const setupUpdatingLink = video =>
-{
-    if (video.tagName.toLowerCase() !== VIDEO_SUGGESTED_TAG)
-        return;
-	
-    waitForElement(video, 'yt-content-metadata-view-model span')
+{	
+    waitForElement(video, CHANNEL_NAME_SELECTOR)
     .then(channelNameElement =>
     {
 		const name = channelNameElement.innerText;
