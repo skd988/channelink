@@ -1,5 +1,5 @@
 const VIDEO_SUGGESTED_TAG = 'yt-lockup-view-model, ytd-compact-video-renderer';
-const WATCH_LATER_SELECTOR = 'div:is(#contents, #items):has(> yt-lockup-view-model:not(.ytd-grid-renderer))';
+const WATCH_LATER_SELECTOR = 'ytd-watch-next-secondary-results-renderer div:is(#contents, #items):has(> yt-lockup-view-model)';
 const SEARCH_FOR_URL = '<link itemprop="url" href="http://www.youtube.com/';
 const YOUTUBE_BASE_DOMAIN = 'https://www.youtube.com/';
 const CHANNEL_NAME_SELECTOR = '.ytd-channel-name yt-formatted-string.ytd-channel-name, yt-content-metadata-view-model span';
@@ -29,7 +29,7 @@ const waitForElement = (target, selector) =>
     });
 };
 
-const getChannelUrl = videoUrl =>
+const getChannelUrl = async videoUrl =>
 {
 	return fetch(YOUTUBE_BASE_DOMAIN + videoUrl)
 	.then(res => res.ok? Promise.resolve(res.text()) : Promise.reject('Error:' + res.status))
@@ -65,13 +65,26 @@ const setupUpdatingLink = video =>
         const linkTag = document.createElement('a');
         
         linkTag.setAttribute('class', 'yt-simple-endpoint style-scope');
-		linkTag.setAttribute('style', '--yt-endpoint-color:var(--yt-spec-text-secondary);--yt-endpoint-hover-color:var(--yt-spec-text-primary);');
+		linkTag.setAttribute('style', '--yt-endpoint-color:var(--t4a6da19e16bf221a);--yt-endpoint-hover-color:var(--tffc2fd3a644f6275);');
         changeChannelNameToLink(linkTag, 
             name, getVideoUrl(video));
 			
 		channelNameElement.removeChild(channelNameElement.firstChild);
 
 		channelNameElement.prepend(linkTag);
+    });
+
+    const removalObservation = new MutationObserver(records =>
+    {
+        if(records.some(record => Array.from(record.removedNodes).some(removed => removed?.classList.contains('ytLockupViewModelHost'))))
+        {
+            removalObservation.disconnect();
+            setupUpdatingLink(video);
+        }
+    });
+
+    removalObservation.observe(video, {
+        childList: true
     });
 };
 
@@ -80,12 +93,6 @@ const addLinksToWatchList = () =>
     waitForElement(document, WATCH_LATER_SELECTOR)
     .then(watchLater => 
     {
-        const observeWatchLaterRemoval = new MutationObserver(records =>
-        {
-            if(records.some(record => Array.from(record.removedNodes).some(removed => removed === watchLater)))
-                addLinksToWatchList();
-        });
-        observeWatchLaterRemoval.observe(watchLater.parentElement, {childList:true});        
         const observer = new MutationObserver(records => 
             records.forEach(record => record.addedNodes.forEach(setupUpdatingLink))
         );
